@@ -98,16 +98,34 @@ df_test = pd.get_dummies(df_test, columns=['Destination','HomePlanet'], drop_fir
 X = df.drop('Transported', axis=1)
 y = df['Transported']
 
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
-scaler = MinMaxScaler()
+scaler = StandardScaler()
 
 x_scaled = scaler.fit_transform(X)
 # print(x_scaled)
 x_test_scaled = scaler.transform(df_test)
 from sklearn.neighbors import KNeighborsClassifier
 
-modelis = KNeighborsClassifier()
+from sklearn.model_selection import cross_val_score
+
+galimas_k = list(range(2,3))
+visi_acc = []
+for k in galimas_k:
+    modelis_su_k = KNeighborsClassifier(n_neighbors=k, n_jobs=-1)
+    dabartinis_acc = cross_val_score(estimator=modelis_su_k, X= x_scaled, y=y, cv=5, scoring='accuracy')
+    visi_acc.append(dabartinis_acc.mean())
+    
+best_k = galimas_k[np.argmax(visi_acc)]
+print(f'Best K: {best_k}')
+
+# sns.lineplot(x=galimas_k, y=visi_acc)
+# plt.show()
+
+from sklearn.svm import SVC
+# modelis = KNeighborsClassifier(n_neighbors=best_k)
+
+modelis = SVC()
 modelis.fit(x_scaled, y)
 
 spejimai = modelis.predict(x_test_scaled)
